@@ -244,6 +244,10 @@ async def predict(
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
+        import gc
+        gc.collect() 
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
 
 @app.get("/logs")
