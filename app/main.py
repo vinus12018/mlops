@@ -170,7 +170,7 @@ async def predict(
         tmp_path = tmp.name
 
     try:
-        all_frames = extract_frames_sliding(tmp_path, fps_to_sample=1)
+        all_frames = extract_frames_sliding(tmp_path, fps_to_sample=3)
 
         if len(all_frames) < 10:
             return {
