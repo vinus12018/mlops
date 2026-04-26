@@ -2,6 +2,7 @@ import os
 import streamlit as st
 import requests
 import pandas as pd
+import time
 from supabase import create_client, Client
 
 # 1. 페이지 기본 설정
