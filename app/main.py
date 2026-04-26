@@ -17,6 +17,18 @@ from fastapi.responses import JSONResponse
 import glob
 from fastapi.middleware.cors import CORSMiddleware # CORS 추가
 from datetime import datetime, timezone, timedelta
+from supabase import create_client, Client
+
+# --- Supabase DB 연결 설정 ---
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+# 만약 허깅페이스 환경변수가 잘 들어왔다면 클라이언트 생성
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+else:
+    supabase = None
+    print("⚠️ Supabase 연결 정보가 없습니다.")
 
 # ==========================================
 # 0. MLflow pickle 로드를 위한 모듈 alias
@@ -213,6 +225,18 @@ async def predict(
             "error_type": None
         }
         background_tasks.add_task(save_inference_log, log_data)
+
+        # --- Supabase DB에 로그 전송 ---
+        if supabase:
+            try:
+                supabase.table('logs').insert({
+                    "filename": actual_snippet_id,    # 찬호님 코드 변수
+                    "prediction": display_message,    # 찬호님 코드 변수
+                    "probability": final_confidence   # 찬호님 코드 변수
+                }).execute()
+                print("✅ Supabase DB에 로그 저장 완료!")
+            except Exception as e:
+                print(f"❌ DB 저장 실패: {e}")
 
         # 💡 핵심 수정 포인트: return 에 "data" 키를 추가하여 log_data를 통째로 넘겨줍니다!
         return {
