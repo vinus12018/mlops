@@ -9,7 +9,7 @@ st.set_page_config(page_title="AI 전도 감지 시스템", page_icon="🚨", la
 # 2. 사이드바 (메뉴 및 설정)
 st.sidebar.title("⚙️ 시스템 설정")
 st.sidebar.markdown("백엔드 서버 주소를 확인하세요.")
-api_url = st.sidebar.text_input("FastAPI 주소", "http://localhost:8000")
+api_url = "https://mlops-nhg8.onrender.com"
 
 st.sidebar.markdown("---")
 menu = st.sidebar.radio("메뉴 이동", ["📹 실시간 영상 분석", "📊 통합 모니터링 대시보드"])
