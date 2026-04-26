@@ -195,12 +195,14 @@ async def predict(
         final_confidence = round(max_confidence, 4)
         predicted_class = 1 if final_confidence >= 0.5 else 0
         display_message = "전도 상황 감지" if predicted_class == 1 else "정상"
+        
+        actual_snippet_id = video.filename
 
         # 4. 민준님이 요청한 8가지 데이터 구성
         log_data = {
             "timestamp": datetime.now(KST).isoformat(),
             "camera_id": camera_id,
-            "video_snippet_id": video_snippet_id,
+            "video_snippet_id": actual_snippet_id,
             "predicted_class": predicted_class,
             "confidence": final_confidence,
             "inference_time_ms": round((time.time() - start_time) * 1000, 2),
