@@ -1,0 +1,17 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# 로컬 테스트 로그 파일 제외 (민준이 모니터링 파일)
+app/logs/
+*.csv
+
+# 가상환경 및 환경변수
+.venv/
+env/
+.env
+
+# 모델 가중치 파일 (MLflow로 다운받으므로 올릴 필요 없음)
+models/
+*.pth
+*.pt
