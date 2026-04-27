@@ -1,2 +1,1 @@
-# mlops
-team project for aiops/mlops
+Main DEV
