@@ -1,17 +1,35 @@
-# Python cache files
+# Python
 __pycache__/
-*.py[cod]
+*.pyc
 
-# 로컬 테스트 로그 파일 제외 (민준이 모니터링 파일)
-app/logs/
-*.csv
-
-# 가상환경 및 환경변수
+# Virtual environment
 .venv/
-env/
+
+# Environment
 .env
 
-# 모델 가중치 파일 (MLflow로 다운받으므로 올릴 필요 없음)
-models/
+# Data
+data/
+*.csv
+*.zip
+*.mp4
+*.avi
+
+# Images / raw dataset
+*.jpg
+*.jpeg
+*.png
+
+# Model files
+saved_models/
 *.pth
 *.pt
+
+# MLflow
+mlruns/
+
+# VS Code
+.vscode/
+
+# Executable / local tools
+ngrok.exe
