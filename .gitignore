@@ -1,0 +1,18 @@
+# 1. 동영상 폴더 전체 무시 (폴더명 뒤에 슬래시 / 추가)
+source_videos/
+
+# 2. 개별 동영상 또는 이미지 확장자 모두 무시
+*.mp4
+*.avi
+*.jpg
+*.png
+*.xml
+
+# 3. 데이터셋 파일 무시
+*.csv
+dataset/
+
+# 4. 파이썬 및 VS Code 임시 파일 무시
+__pycache__/
+*.pyc
+.vscode/
