@@ -2,33 +2,28 @@ import os
 import pandas as pd
 from moviepy.editor import VideoFileClip
 
-# ⚙️ 설정값
 MANIFESTS = ["train_manifest.csv", "valid_manifest.csv"]
-SOURCE_VIDEO_DIR = "source_videos"
 OUTPUT_CLIP_DIR = "clips"
 
 def main():
     os.makedirs(OUTPUT_CLIP_DIR, exist_ok=True)
     
     for manifest in MANIFESTS:
-        print(f"\n📄 '{manifest}'에 등록된 영상 자르기를 시작합니다...")
-        if not os.path.exists(manifest):
-            continue
-
+        print(f"\n📄 '{manifest}' 기반 영상 추출을 시작합니다...")
+        if not os.path.exists(manifest): continue
         df = pd.read_csv(manifest)
         
         for idx, row in df.iterrows():
             clip_id = row['clip_id']
-            original_path = os.path.join(SOURCE_VIDEO_DIR, f"{clip_id}.mp4")
+            source_dir = row['source_dir'] # ⭐️ 전도는 source_videos, 정상은 normal_videos에서 똑똑하게 꺼내옵니다.
+            
+            original_path = os.path.join(source_dir, f"{clip_id}.mp4")
             output_path = os.path.join(OUTPUT_CLIP_DIR, f"{clip_id}.mp4")
 
-            # 이미 잘린 영상은 초고속 건너뛰기!
             if os.path.exists(output_path):
-                print(f"⏩ 통과 (이미 존재함): {clip_id}")
                 continue
-                
             if not os.path.exists(original_path):
-                print(f"⚠️ 원본 없음 (건너뜀): {clip_id}")
+                print(f"⚠️ 원본 파일 없음: {original_path}")
                 continue
 
             try:
@@ -40,17 +35,26 @@ def main():
                     end_sec = float(row['end_sec'])
                     clip_start, clip_end = max(0, start_sec - 5), min(duration, end_sec + 5)
                 else:
-                    clip_start, clip_end = 0, min(duration, 10.0)
+                    clip_start, clip_end = 0, min(duration, 10.0) # 5초짜리 영상이면 알아서 5초까지만 자릅니다!
                     
                 subclip = video.subclip(clip_start, clip_end)
-                subclip.write_videofile(output_path, codec="libx264", audio=False, logger=None)
+                
+                # ⭐️ 마법의 호환성 주문 추가!
+                subclip.write_videofile(
+                    output_path, 
+                    fps=3, 
+                    codec="libx264", 
+                    audio=False, 
+                    logger=None,
+                    ffmpeg_params=["-pix_fmt", "yuv420p"]
+                )
                 video.close()
                 subclip.close()
-                print(f"✂️ 생성 완료: {clip_id}")
+                print(f"✂️ 추출 완료: {clip_id}")
             except Exception as e:
                 pass
                 
-    print("\n✨ 모든 영상 클립 준비가 완료되었습니다!")
+    print("\n✨ 모든 학습용 클립(전도+운동) 준비가 완료되었습니다!")
 
 if __name__ == "__main__":
     main()

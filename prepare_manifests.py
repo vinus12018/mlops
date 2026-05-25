@@ -5,13 +5,15 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 
 # ⚙️ 설정값
-XML_DIR = "labels" 
+XML_DIR = "labels"                  # 기존 전도 데이터 정답지 폴더
+FALL_VIDEO_DIR = "source_videos"    # 기존 전도 원본 영상 폴더
+NORMAL_VIDEO_DIR = "normal_videos"  # ⭐️ 새로 만든 정상 원본 영상 폴더
 TRAIN_CSV = "train_manifest.csv"
 VALID_CSV = "valid_manifest.csv"
-SPLIT_RATIO = 0.8  # 학습용 80%, 검증용 20%
-FPS = 3.0          # ⭐️ 초당 3프레임(3fps) 반영
+SPLIT_RATIO = 0.8
+FPS = 3.0
 
-def parse_single_xml(xml_path):
+def parse_fall_xml(xml_path):
     tree = ET.parse(xml_path)
     root = tree.getroot()
     
@@ -27,53 +29,60 @@ def parse_single_xml(xml_path):
             end_frame = int(track.find('box').get('frame'))
                 
     if start_frame is not None and end_frame is not None:
-        true_label, behavior_type = 1, "전도"
-        start_sec = round(start_frame / FPS, 2)
-        end_sec = round(end_frame / FPS, 2)
-    else:
-        true_label, behavior_type = 0, "정상보행"
-        start_sec, end_sec = "", ""
-        
+        return {
+            "clip_id": video_name,
+            "source_dir": FALL_VIDEO_DIR, # 전도 영상은 여기서 찾아라!
+            "video_path": f"clips/{video_name}.mp4",
+            "true_label": 1,
+            "behavior_type": "전도",
+            "start_sec": round(start_frame / FPS, 2),
+            "end_sec": round(end_frame / FPS, 2),
+        }
+    return None
+
+def parse_normal_video(mp4_path):
+    # XML 없이 파일명만 보고 '정상(0)' 라벨을 쾅 찍어줍니다!
+    clip_id = os.path.splitext(os.path.basename(mp4_path))[0]
     return {
-        "clip_id": video_name,
-        "video_path": f"clips/{video_name}.mp4",
-        "true_label": true_label,
-        "behavior_type": behavior_type,
-        "start_sec": start_sec,
-        "end_sec": end_sec,
+        "clip_id": clip_id,
+        "source_dir": NORMAL_VIDEO_DIR, # 정상 영상은 여기서 찾아라!
+        "video_path": f"clips/{clip_id}.mp4",
+        "true_label": 0,
+        "behavior_type": "운동(정상)",
+        "start_sec": 0,    # 0초부터
+        "end_sec": 10.0,   # 최대 10초까지 알아서 자르기
     }
 
 def main():
-    print(f"🔍 '{XML_DIR}' 폴더에서 전체 XML 데이터를 스캔합니다...")
-    xml_files = glob.glob(os.path.join(XML_DIR, "*.xml"))
-    xml_files.sort()
+    print("🔍 1. 기존 전도(Fall) 데이터를 스캔합니다...")
+    fall_data = []
+    for xml_file in glob.glob(os.path.join(XML_DIR, "*.xml")):
+        parsed = parse_fall_xml(xml_file)
+        if parsed: fall_data.append(parsed)
+            
+    print("🔍 2. 새로운 운동(Normal) 데이터를 스캔합니다...")
+    normal_data = []
+    for mp4_file in glob.glob(os.path.join(NORMAL_VIDEO_DIR, "*.mp4")):
+        normal_data.append(parse_normal_video(mp4_file))
+        
+    # 두 데이터 합치기! (약 645 + 650 = 1295개)
+    total_data = fall_data + normal_data
     
-    if not xml_files:
-        print("❌ XML 파일을 찾을 수 없습니다.")
-        return
-
-    data_list = []
-    for xml_file in xml_files:
-        try:
-            data_list.append(parse_single_xml(xml_file))
-        except Exception as e:
-            pass
-
-    # 🎲 80:20 무작위 분할 (seed 고정으로 항상 같은 비율 유지)
+    # 🎲 골고루 섞기 (전도랑 정상이 뭉쳐있지 않게 쉐킷쉐킷!)
     random.seed(42)
-    random.shuffle(data_list)
+    random.shuffle(total_data)
     
-    split_index = int(len(data_list) * SPLIT_RATIO)
-    train_data = data_list[:split_index]
-    valid_data = data_list[split_index:]
+    # 80:20 분할
+    split_idx = int(len(total_data) * SPLIT_RATIO)
+    train_data = total_data[:split_idx]
+    valid_data = total_data[split_idx:]
 
-    # CSV 저장
     pd.DataFrame(train_data).to_csv(TRAIN_CSV, index=False, encoding='utf-8-sig')
     pd.DataFrame(valid_data).to_csv(VALID_CSV, index=False, encoding='utf-8-sig')
     
-    print(f"✅ 데이터 분할 완료! 총 {len(data_list)}개 중")
-    print(f"   -> 📚 학습용(Train): {len(train_data)}개 저장 ({TRAIN_CSV})")
-    print(f"   -> 📝 검증용(Valid): {len(valid_data)}개 저장 ({VALID_CSV})")
+    print(f"\n✅ 완벽한 황금비율 정답지 생성 완료!")
+    print(f"   -> 📚 학습용(Train): {len(train_data)}개")
+    print(f"   -> 📝 검증용(Valid): {len(valid_data)}개")
 
 if __name__ == "__main__":
     main()
