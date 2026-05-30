@@ -157,5 +157,15 @@ def train_model():
         )
         print("✅ DagsHub Registry에 완벽하게 등록되었습니다!")
 
+        print("\n[자동화 파이프라인 1단계] 학습이 완료되었습니다. 즉시 자동 평가를 시작합니다.")
+        eval_command = f"python run_eval.py --model_path {best_model_path} --manifest valid_manifest.csv"
+        os.system(eval_command)
+        
+        print("\n[자동화 파이프라인 2단계] 평가 결과를 바탕으로 재학습 필요 여부를 진단합니다.")
+        trigger_command = "python check_retrain_trigger.py"
+        os.system(trigger_command)
+        
+        print("\n[파이프라인 종료] 학습부터 평가, 재학습 진단까지 모든 자동화 프로세스가 완료되었습니다.")
+
 if __name__ == "__main__":
     train_model()

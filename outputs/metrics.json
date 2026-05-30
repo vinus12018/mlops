@@ -1,6 +1,10 @@
 {
-    "accuracy": 1.0,
-    "precision": 1.0,
+    "accuracy": 0.872093023255814,
+    "precision": 0.7962962962962963,
     "recall": 1.0,
-    "f1_score": 1.0
+    "f1_score": 0.8865979381443299,
+    "tp_count": 129,
+    "tn_count": 96,
+    "fp_count": 33,
+    "fn_count": 0
 }
