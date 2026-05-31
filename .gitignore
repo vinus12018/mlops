@@ -21,9 +21,12 @@ data/
 *.png
 
 # Model files
-saved_models/
+saved_models/*/
 *.pth
 *.pt
+
+# DVC metadata
+!saved_models/*.dvc
 
 # MLflow
 mlruns/
@@ -33,3 +36,6 @@ mlruns/
 
 # Executable / local tools
 ngrok.exe
+
+keys/
+*.json
