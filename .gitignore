@@ -8,8 +8,18 @@ __pycache__/
 # Environment
 .env
 
+# =========================
 # Data
-data/
+# =========================
+
+# 실제 데이터는 무시
+data/raw/
+data/processed/
+
+# DVC 메타파일은 허용
+!data/*.dvc
+
+# 대용량 파일
 *.csv
 *.zip
 *.mp4
@@ -20,22 +30,33 @@ data/
 *.jpeg
 *.png
 
+# =========================
 # Model files
+# =========================
+
+# 실제 모델 파일은 무시
 saved_models/*/
 *.pth
 *.pt
 
-# DVC metadata
+# DVC 메타파일은 허용
 !saved_models/*.dvc
 
+# =========================
 # MLflow
+# =========================
 mlruns/
 
+# =========================
 # VS Code
+# =========================
 .vscode/
 
+# =========================
 # Executable / local tools
+# =========================
 ngrok.exe
 
+# Google Service Account (추후 사용 시)
 keys/
 *.json
