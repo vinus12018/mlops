@@ -4,7 +4,7 @@ WORKDIR /code
 
 RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
 
-RUN pip install setuptools
+RUN pip install --upgrade pip setuptools wheel
 
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r /code/requirements.txt -f https://download.pytorch.org/whl/torch_stable.html
