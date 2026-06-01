@@ -1,0 +1,14 @@
+version: model_v6
+status: in_progress
+
+data:
+  description: "작성 예정"
+
+preprocessing:
+  method: "작성 예정"
+
+artifact:
+  dataset_path: "not_created_yet"
+  model_path: "not_created_yet"
+
+note: "현재 제작 중"

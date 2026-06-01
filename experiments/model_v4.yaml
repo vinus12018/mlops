@@ -1,0 +1,19 @@
+version: model_v4
+status: completed_without_artifact
+
+data:
+  train_videos: 645
+  validation_videos: 81
+
+preprocessing:
+  method: "전도 발생 시점부터 영상 추출 후 랜덤 10초 구간 선택"
+  fps: 3
+
+model:
+  architecture: "ResNet50 + LSTM"
+
+artifact:
+  dataset_path: "not_available"
+  model_path: "not_available"
+
+note: "8:2 분할 대신 원본 645개를 학습셋, Validation 81개를 테스트셋으로 사용"

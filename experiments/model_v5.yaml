@@ -1,0 +1,20 @@
+version: model_v5
+status: completed_without_artifact
+
+data:
+  fall_videos: 645
+  non_fall_videos: 650
+  split: "8:2"
+
+preprocessing:
+  method: "전도 발생 시점부터 영상 추출 후 랜덤 10초 구간 선택"
+  fps: 3
+
+model:
+  architecture: "ResNet50 + LSTM"
+
+artifact:
+  dataset_path: "not_available"
+  model_path: "not_available"
+
+note: "비전도 데이터(푸쉬업, 윗몸일으키기) 650개 추가 후 재학습"

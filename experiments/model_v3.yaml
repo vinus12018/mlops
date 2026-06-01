@@ -1,0 +1,15 @@
+version: model_v3
+
+data:
+  fall_videos: 645
+  non_fall_videos: 650
+  split: "8:2"
+
+preprocessing:
+  method: "model_v2 방식"
+  fps: 3
+
+model:
+  architecture: "ResNet50 + LSTM"
+
+note: "푸쉬업, 윗몸일으키기 추가"

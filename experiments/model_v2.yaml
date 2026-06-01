@@ -1,0 +1,14 @@
+version: model_v2
+
+data:
+  fall_videos: 645
+  split: "8:2"
+
+preprocessing:
+  method: "전도 발생 시점부터 추출 후 랜덤 10초 선택"
+  fps: 3
+
+model:
+  architecture: "ResNet50 + LSTM"
+
+note: "전도 발생 시점 기준으로 데이터 재구성"

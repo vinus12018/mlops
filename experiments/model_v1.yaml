@@ -1,0 +1,14 @@
+version: model_v1
+
+data:
+  fall_videos: 645
+  split: "8:2"
+
+preprocessing:
+  method: "10초 영상 추출"
+  fps: 3
+
+model:
+  architecture: "ResNet50 + LSTM"
+
+note: "원본 데이터 기반 첫 실험"
