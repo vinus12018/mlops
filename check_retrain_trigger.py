@@ -9,7 +9,7 @@ def main(args):
 
     # 1. 파일 존재 여부 확인
     if not os.path.exists(args.metrics_path) or not os.path.exists(args.predictions_path):
-        print(f"에러: 평가 결과 파일이 존재하지 않습니다. run_eval.py를 먼저 실행해 주세요.")
+        print(f"[오류] 평가 결과 파일이 존재하지 않습니다. run_eval.py를 먼저 실행해 주세요.")
         return
 
     # 2. 평가 지표 로드
@@ -35,29 +35,37 @@ def main(args):
     if metrics.get("fp_count", 0) >= 3:
         reasons.append(f"오탐지(FP) 과다: {metrics.get('fp_count')}건 발생")
 
-    # 특정 에러 패턴 반복 검사 (빈 값이 아닌 에러 타입만 추출)
+    # 5. 특정 에러 패턴 반복 검사 및 main_error_type 추출
     errors = df[df["error_type"].notna() & (df["error_type"] != "")]
     error_counts = Counter(errors["error_type"].tolist())
+
+    main_error_type = ""
+    max_error_count = 0
 
     for error_type, count in error_counts.items():
         if count >= 3:
             reasons.append(f"특정 에러 패턴 반복: {error_type} ({count}건)")
+            # 가장 빈번하게 발생한 에러 타입을 기록 (하드 네거티브 마이닝 타겟)
+            if count > max_error_count:
+                max_error_count = count
+                main_error_type = error_type
 
-    # 5. 최종 판단
+    # 6. 최종 판단
     if len(reasons) > 0:
         retrain_needed = True
 
-    # 6. 결과 저장
+    # 7. 결과 저장 (main_error_type 추가)
     result = {
         "retrain_needed": retrain_needed,
-        "retrain_reason": reasons
+        "retrain_reason": reasons,
+        "main_error_type": main_error_type
     }
 
     os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
     with open(args.output_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=4, ensure_ascii=False)
 
-    # 7. 진단 결과 출력
+    # 8. 진단 결과 출력
     print("=" * 50)
     print("[재학습 필요 여부 진단 결과]")
     print(f"재학습 대상 여부 : {retrain_needed}")
@@ -66,6 +74,8 @@ def main(args):
         print("\n[상세 사유]")
         for r in reasons:
             print(f"- {r}")
+        if main_error_type:
+            print(f"\n[핵심 보강 타겟] {main_error_type}")
     else:
         print("\n현재 모델 상태가 안정적이므로 재학습이 필요하지 않습니다.")
     print("=" * 50)

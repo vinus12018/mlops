@@ -42,9 +42,9 @@ class FallDetectionModel(nn.Module):
 # 2. 메인 학습 파이프라인
 # ==========================================
 def train_model():
-    print("🚀 MLOps 파이프라인: 모델 학습을 준비합니다...\n")
+    print("MLOps 파이프라인: 모델 학습을 준비합니다...\n")
 
-    # ⚙️ 설정값 세팅 (통합 정답지 경로)
+    # 설정값 세팅 (통합 정답지 경로)
     TRAIN_MANIFEST = "train_manifest.csv" 
     VAL_MANIFEST = "valid_manifest.csv"
     
@@ -53,7 +53,7 @@ def train_model():
     LR = 0.0001
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"🖥️ 사용 중인 장비: {device}")
+    print(f"사용 중인 장비: {device}")
 
     train_loader = get_dataloader(TRAIN_MANIFEST, mode='train', batch_size=BATCH_SIZE)
     val_loader = get_dataloader(VAL_MANIFEST, mode='val', batch_size=BATCH_SIZE)
@@ -67,7 +67,7 @@ def train_model():
     mlflow.set_tracking_uri("https://dagshub.com/Luvid-Lexus/Fall_Detection.mlflow")
     
     # -----------------------------------------------------
-    # ✨ 스마트 모델 저장소 (자동 버전업 로직)
+    # 스마트 모델 저장소 (자동 버전업 로직)
     # -----------------------------------------------------
     existing_dirs = glob.glob("model_v*")
     next_version = len(existing_dirs) + 1
@@ -76,19 +76,23 @@ def train_model():
     os.makedirs(save_dir, exist_ok=True)
     best_model_path = os.path.join(save_dir, f"best_model_v{next_version}.pth")
     
-    print(f"\n📁 이번 학습의 최고 모델은 '{save_dir}' 폴더에 자동으로 안전하게 저장됩니다!")
+    print(f"\n이번 학습의 최고 모델은 '{save_dir}' 폴더에 자동으로 안전하게 저장됩니다!")
     # -----------------------------------------------------
 
-    best_recall = 0.0
+    # [수정됨] 조기 종료 및 베스트 모델 저장 기준 변수 초기화
+    best_val_f1 = 0.0
+    best_val_loss = float('inf')
+    patience = 3
+    early_stop_counter = 0
 
-    print("\n🎬 본격적인 학습을 시작합니다!")
+    print("\n본격적인 학습을 시작합니다!")
     
-    # 장부 이름도 버전에 맞게 자동으로 올라가도록 세팅!
+    # 장부 이름도 버전에 맞게 자동으로 올라가도록 세팅
     with mlflow.start_run(run_name=f"Balanced_Data_V{next_version}"):
         mlflow.log_params({"epochs": EPOCHS, "batch_size": BATCH_SIZE, "learning_rate": LR})
         
         for epoch in range(EPOCHS):
-            # 🥊 학습 모드
+            # 학습 모드
             model.train()
             train_loss = 0.0
             
@@ -104,7 +108,7 @@ def train_model():
                 
                 train_loss += loss.item()
             
-            # 📝 검증 모드
+            # 검증 모드
             model.eval()
             val_loss = 0.0
             all_preds, all_labels = [], []
@@ -125,29 +129,49 @@ def train_model():
                     all_labels.extend(labels.cpu().numpy())
             
             # 통계 지표 계산
+            epoch_train_loss = train_loss / len(train_loader)
+            epoch_val_loss = val_loss / len(val_loader)
+            
             acc = accuracy_score(all_labels, all_preds)
             rec = recall_score(all_labels, all_preds, zero_division=0)
             f1 = f1_score(all_labels, all_preds, zero_division=0)
             
-            print(f"Epoch [{epoch+1:02d}/{EPOCHS}] Train Loss: {train_loss/len(train_loader):.4f} | Val Loss: {val_loss/len(val_loader):.4f} | Recall: {rec:.4f} | F1: {f1:.4f}")
+            print(f"Epoch [{epoch+1:02d}/{EPOCHS}] Train Loss: {epoch_train_loss:.4f} | Val Loss: {epoch_val_loss:.4f} | Recall: {rec:.4f} | F1: {f1:.4f}")
             
             mlflow.log_metrics({
-                "train_loss": train_loss/len(train_loader),
-                "val_loss": val_loss/len(val_loader),
+                "train_loss": epoch_train_loss,
+                "val_loss": epoch_val_loss,
                 "val_recall": rec,
                 "val_f1": f1
             }, step=epoch)
             
-            # 모델 저장 로직 완벽 복구
-            if rec >= best_recall:
-                best_recall = rec
-                torch.save(model.state_dict(), best_model_path)
-                print(f"   ⭐ 최고 성능 갱신! '{best_model_path}'에 안전하게 저장했습니다.")
+            # ---------------------------------------------------------
+            # [수정됨] 모델 저장 로직 (Recall 방어선 + F1/Loss 최적화)
+            # ---------------------------------------------------------
+            if rec >= 0.90:
+                if f1 > best_val_f1 or (f1 == best_val_f1 and epoch_val_loss < best_val_loss):
+                    best_val_f1 = f1
+                    best_val_loss = epoch_val_loss
+                    early_stop_counter = 0
+                    
+                    torch.save(model.state_dict(), best_model_path)
+                    print(f"   -> [Best Model 갱신] F1: {f1:.4f} (성공적으로 저장됨)")
+                else:
+                    early_stop_counter += 1
+                    print(f"   -> [성능 유지] 최고 F1: {best_val_f1:.4f} | Early Stopping 카운트: {early_stop_counter}/{patience}")
+            else:
+                early_stop_counter += 1
+                print(f"   -> [저장 제외] Recall({rec:.4f})이 0.90 미만입니다. | Early Stopping 카운트: {early_stop_counter}/{patience}")
+
+            # 조기 종료 조건 확인
+            if early_stop_counter >= patience:
+                print(f"\n[Early Stopping 작동] {patience} 에포크 동안 유의미한 성능 개선이 없어 학습을 조기 종료합니다.")
+                break
 
         # ---------------------------------------------------------
         # 3. 학습 종료 및 클라우드 업로드
         # ---------------------------------------------------------
-        print("\n🎉 모든 학습이 끝났습니다. 최고 모델을 MLflow로 포장합니다...")
+        print("\n모든 학습이 끝났습니다. 최고 모델을 MLflow로 포장합니다...")
         model.load_state_dict(torch.load(best_model_path))
         
         mlflow.pytorch.log_model(
@@ -155,7 +179,7 @@ def train_model():
             name="best_model",
             registered_model_name="FallDetection_Prod_Model"
         )
-        print("✅ DagsHub Registry에 완벽하게 등록되었습니다!")
+        print("DagsHub Registry에 완벽하게 등록되었습니다!")
 
         print("\n[자동화 파이프라인 1단계] 학습이 완료되었습니다. 즉시 자동 평가를 시작합니다.")
         eval_command = f"python run_eval.py --model_path {best_model_path} --manifest valid_manifest.csv"

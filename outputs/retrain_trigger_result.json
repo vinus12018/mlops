@@ -1,7 +1,5 @@
 {
-    "retrain_needed": true,
-    "retrain_reason": [
-        "오탐지(FP) 과다: 33건 발생",
-        "특정 에러 패턴 반복: FP_정상(매장) (33건)"
-    ]
+    "retrain_needed": false,
+    "retrain_reason": [],
+    "main_error_type": ""
 }
