@@ -1,2 +1,8 @@
-# mlops
-team project for aiops/mlops
+---
+title: Fall Detection API
+emoji: 🛡
+colorFrom: blue
+colorTo: cyan
+sdk: docker
+pinned: false
+---
