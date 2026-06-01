@@ -272,7 +272,23 @@ async def predict(
         gc.collect() 
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-
+            
+@app.post("/reload-model")
+def reload_model():
+    global model
+    try:
+        print("모델 재로드 시작...")
+        model = mlflow.pytorch.load_model(
+            "models:/FallDetection_Prod_Model/Production",
+            map_location=torch.device("cpu")
+        )
+        model.to(device)
+        model.eval()
+        print("✅ 모델 재로드 완료!")
+        return {"status": "success", "message": "모델 재로드 완료!"}
+    except Exception as e:
+        print(f"❌ 모델 재로드 실패: {e}")
+        return {"status": "error", "message": str(e)}
 
 @app.get("/logs")
 def get_logs():
